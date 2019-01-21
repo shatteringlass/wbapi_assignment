@@ -1,5 +1,11 @@
+import io
 import requests
-from .models import Country, Region, ILevel, LType
+import zipfile
+
+from .models import Country
+from .models import ILevel
+from .models import LType
+from .models import Region
 
 
 class WBAPIClient:
@@ -10,14 +16,37 @@ class WBAPIClient:
     def __init__(self):
         self.session = requests.Session()
 
-    def base_request(self, url):
-        response = self.session.get(url, params={'format': 'json'})
+    def base_request(self, url, params=None):
+        response = self.session.get(
+            url, params=params)
         try:
             response.raise_for_status()
         except requests.HTTPError as e:
             raise e
         else:
-            return response.json()
+            return response
+
+    def json_handler(self, url):
+        r = base_request(url, params={'per_page': 500, 'format': 'json'})
+        if 'application/json' in r.headers:
+            r = r.json()
+            if len(r) == 1:
+                raise Exception("No result was returned.")
+            else:
+                # TODO
+                # Handle pagination, for now the workaround
+                # is to request more records than
+                # are available from the API
+                return r[1]
+        else:
+            raise Exception("Wrong handler, response is not JSON-like.")
+
+    def zip_handler(self, url):
+        r = base_request(url)
+        if 'application/x-zip-compressed' in r.headers:
+            return zipfile.ZipFile(io.BytesIO(r.content))
+        else:
+            raise Exception("Wrong handler, response is not ZIP-like.")
 
     @classmethod
     def parse_region(cls, region):
@@ -49,16 +78,17 @@ class WBAPIClient:
                        lon=ctry['longitude'],
                        lat=ctry['latitude'])
 
-    def all_countries(self):
-        pass
+    def get_gdp_data(self):
+        zipfile = self.zip_handler(url=self.GEP_CSV_URL)
+        try:
+            # TODO
+            # Implement extraction of CSV data series
+            pass
+        except:
+            raise Exception("Unexpected data inside ZIP file.")
 
-    def get_country(self, country):
-        url = f"{self.COUNTRY_API_URL}/{country}"
-        response = self.base_request(url=url)
-        country_json = None
-        if len(response) == 1:
-            # no result was returned
-            raise Exception("The provided country code value is not valid.")
-        else:
-            country_json = response[1][0]
-        return self.parse_country(country_json)
+    def get_countries(self):
+        countries = self.json_handler(url=self.COUNTRY_API_URL)
+        while countries:
+            ctry = countries.pop(0)
+            yield self.parse_country(ctry)
