@@ -1,48 +1,47 @@
 import psycopg2
-from .wbapi import WBAPIClient
-import pprint
 
-persistent_fields = {'Country': [],
-                     }
+from .models import adapters
+from .wbapi import WBAPIClient
+
+pfields = {'Country': [],
+           'Region': [],
+           'ILevel': [],
+           'LType': []
+           }
 
 
 class ObjectMapper:
-    def __init__(self, orig):
-        self.orig = orig
-        self.tmp = {}
-        self.items, self.fields = self._gatherState()
+    def __init__(self, obj):
+        self._obj = obj
+        self._name = self.orig.__class__.__name__
+        self._pfields = pfields[self._name]
+        self._state = {field: getattr(self.orig, field)
+                       for field in self.pfields}
 
-    def _gatherState(self):
-        adaptee_name = self.orig.__class__.__name__
-        fields = sorted([(field, getattr(self.orig, field))
-                         for field in persistent_fields[adaptee_name]])
-        items = []
-        for item, value in fields:
-            items.append(item)
-        return items, fields
+    @property
+    def table_name(self):
+        return self._name
 
-    def getTableName(self):
-        return self.orig.__class__.__name__
+    @property
+    def state(self):
+        return self._state
 
-    def getMappedValues(self):
-        tmp = []
-        for i in self.items:
-            tmp.append("%%(%s)s" % i)
-        return ", ".join(tmp)
+    @property
+    def fields(self):
+        return list(self.state.keys())
 
-    def getValuesDict(self):
-        return dict(self.fields)
+    @property
+    def mapped_values(self):
+        return ", ".join([f"%({i})s" for i in self.fields])
 
-    def getFields(self):
-        return self.items
+    @property
+    def insert_statement(self):
+        qry = f"INSERT INTO {self.table_name} ({', '.join(self.fields)}) VALUES ({self.mapped_values});"
+        return qry, self.state
 
-    def generateInsert(self):
-        qry = "INSERT INTO"
-        qry += " " + self.getTableName() + " ("
-        qry += ", ".join(self.getFields()) + ") VALUES ("
-        qry += self.getMappedValues() + ")"
-        return qry, self.getValuesDict()
 
+psycopg2.extensions.adapters.update(adapters)
 
 c = WBAPIClient()
-pprint.pprint(list(c.get_countries()), indent=4)
+for country in c.get_countries():
+    print(psycopg2.extensions.adapt(country).insert_statement)

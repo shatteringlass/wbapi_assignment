@@ -1,3 +1,5 @@
+from db import ObjectMapper
+
 
 class ILevel:
 
@@ -59,3 +61,9 @@ class Country:
 
     def __repr__(self):
         return str(self.__dict__)
+
+
+adapters = {Country: ObjectMapper,
+            Region: ObjectMapper,
+            ILevel: ObjectMapper,
+            LType: ObjectMapper}
