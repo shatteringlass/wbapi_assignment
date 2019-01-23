@@ -2,13 +2,14 @@ import psycopg2
 
 from wbapi import WBAPIClient
 
-dbname = "wbdb"
-uid = "wbdb_user"
+dbname = "wbapi"
+uid = "federico"
 
 pfields = {'Country': ['iso3', 'iso2', 'name', 'reg_id', 'ilevel_id', 'ltype_id', 'capital', 'lon', 'lat'],
            'Region': ['id', 'iso2', 'value'],
            'ILevel': ['id', 'iso2', 'value'],
-           'LType': ['id', 'iso2', 'value']
+           'LType': ['id', 'iso2', 'value'],
+           'GDPDatapoint': ['ctry_name', 'ctry_code', 'year', 'value']
            }
 
 
@@ -37,6 +38,11 @@ class ObjectMapper:
         return ", ".join([f"%({i})s" for i in self.fields])
 
     @property
+    def create_statement(self):
+        sql = f"CREATE TABLE IF NOT EXISTS {self.table_name} ({' varchar, '.join(self.fields)} varchar);"
+        return sql
+
+    @property
     def insert_statement(self):
         sql = f"INSERT INTO {self.table_name} ({', '.join(self.fields)}) VALUES ({self.mapped_values});"
         return sql, self.state
@@ -45,12 +51,26 @@ class ObjectMapper:
 def populate_db():
     conn = psycopg2.connect(f"dbname={dbname} user={uid}")
     cur = conn.cursor()
-    with WBAPIClient() as c:
-        for country in c.get_countries():
-            cur.execute(ObjectMapper(country).insert_statement)
-            cur.execute(ObjectMapper(country.region).insert_statement)
-            cur.execute(ObjectMapper(country.ltype).insert_statement)
-            cur.execute(ObjectMapper(country.ilevel).insert_statement)
+    c = WBAPIClient()
+    for i, country in enumerate(c.get_countries()):
+        if i == 0:
+            cur.execute(ObjectMapper(country).create_statement)
+            cur.execute(ObjectMapper(country.region).create_statement)
+            cur.execute(ObjectMapper(country.ltype).create_statement)
+            cur.execute(ObjectMapper(country.ilevel).create_statement)
             conn.commit()
+        cur.execute(*ObjectMapper(country).insert_statement)
+        cur.execute(*ObjectMapper(country.region).insert_statement)
+        cur.execute(*ObjectMapper(country.ltype).insert_statement)
+        cur.execute(*ObjectMapper(country.ilevel).insert_statement)
+    for i, dp in enumerate(c.get_gdp_data()):
+        if i == 0:
+            cur.execute(ObjectMapper(dp).create_statement)
+            conn.commit()
+        cur.execute(*ObjectMapper(dp).insert_statement)
+    conn.commit()
     cur.close()
     conn.close()
+
+
+populate_db()
