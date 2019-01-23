@@ -2,10 +2,10 @@ import io
 import requests
 import zipfile
 
-from .models import Country
-from .models import ILevel
-from .models import LType
-from .models import Region
+from models import Country
+from models import ILevel
+from models import LType
+from models import Region
 
 
 class WBAPIClient:
@@ -27,8 +27,8 @@ class WBAPIClient:
             return response
 
     def json_handler(self, url):
-        r = base_request(url, params={'per_page': 500, 'format': 'json'})
-        if 'application/json' in r.headers:
+        r = self.base_request(url, params={'per_page': 500, 'format': 'json'})
+        if 'application/json' in r.headers['Content-Type']:
             r = r.json()
             if len(r) == 1:
                 raise Exception("No result was returned.")
@@ -42,27 +42,27 @@ class WBAPIClient:
             raise Exception("Wrong handler, response is not JSON-like.")
 
     def zip_handler(self, url):
-        r = base_request(url)
-        if 'application/x-zip-compressed' in r.headers:
+        r = self.base_request(url)
+        if 'application/x-zip-compressed' in r.headers['Content-Type']:
             return zipfile.ZipFile(io.BytesIO(r.content))
         else:
             raise Exception("Wrong handler, response is not ZIP-like.")
 
     @classmethod
     def parse_region(cls, region):
-        return Region(id=region['id'],
+        return Region(_id=region['id'],
                       iso2=region['iso2code'],
                       value=region['value'])
 
     @classmethod
     def parse_ilevel(cls, ilevel):
-        return ILevel(id=ilevel['id'],
+        return ILevel(_id=ilevel['id'],
                       iso2=ilevel['iso2code'],
                       value=ilevel['value'])
 
     @classmethod
     def parse_ltype(cls, ltype):
-        return LType(id=ltype['id'],
+        return LType(_id=ltype['id'],
                      iso2=ltype['iso2code'],
                      value=ltype['value'])
 

@@ -1,22 +1,24 @@
 import psycopg2
 
-from .models import adapters
-from .wbapi import WBAPIClient
+from wbapi import WBAPIClient
 
-pfields = {'Country': [],
-           'Region': [],
-           'ILevel': [],
-           'LType': []
+dbname = "wbdb"
+uid = "wbdb_user"
+
+pfields = {'Country': ['iso3', 'iso2', 'name', 'reg_id', 'ilevel_id', 'ltype_id', 'capital', 'lon', 'lat'],
+           'Region': ['id', 'iso2', 'value'],
+           'ILevel': ['id', 'iso2', 'value'],
+           'LType': ['id', 'iso2', 'value']
            }
 
 
 class ObjectMapper:
     def __init__(self, obj):
         self._obj = obj
-        self._name = self.orig.__class__.__name__
+        self._name = self._obj.__class__.__name__
         self._pfields = pfields[self._name]
-        self._state = {field: getattr(self.orig, field)
-                       for field in self.pfields}
+        self._state = {field: getattr(self._obj, field)
+                       for field in self._pfields}
 
     @property
     def table_name(self):
@@ -36,12 +38,19 @@ class ObjectMapper:
 
     @property
     def insert_statement(self):
-        qry = f"INSERT INTO {self.table_name} ({', '.join(self.fields)}) VALUES ({self.mapped_values});"
-        return qry, self.state
+        sql = f"INSERT INTO {self.table_name} ({', '.join(self.fields)}) VALUES ({self.mapped_values});"
+        return sql, self.state
 
 
-psycopg2.extensions.adapters.update(adapters)
-
-c = WBAPIClient()
-for country in c.get_countries():
-    print(psycopg2.extensions.adapt(country).insert_statement)
+def populate_db():
+    conn = psycopg2.connect(f"dbname={dbname} user={uid}")
+    cur = conn.cursor()
+    with WBAPIClient() as c:
+        for country in c.get_countries():
+            cur.execute(ObjectMapper(country).insert_statement)
+            cur.execute(ObjectMapper(country.region).insert_statement)
+            cur.execute(ObjectMapper(country.ltype).insert_statement)
+            cur.execute(ObjectMapper(country.ilevel).insert_statement)
+            conn.commit()
+    cur.close()
+    conn.close()

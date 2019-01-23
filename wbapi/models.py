@@ -1,10 +1,8 @@
-from db import ObjectMapper
-
 
 class ILevel:
 
-    def __init__(self, id, iso2, value):
-        self.id = id
+    def __init__(self, _id, iso2, value):
+        self.id = _id
         self.iso2 = iso2
         self.value = value
 
@@ -14,8 +12,8 @@ class ILevel:
 
 class LType:
 
-    def __init__(self, id, iso2, value):
-        self.id = id
+    def __init__(self, _id, iso2, value):
+        self.id = _id
         self.iso2 = iso2
         self.value = value
 
@@ -25,8 +23,8 @@ class LType:
 
 class Region:
 
-    def __init__(self, id, iso2, value):
-        self.id = id
+    def __init__(self, _id, iso2, value):
+        self.id = _id
         self.iso2 = iso2
         self.value = value
 
@@ -55,15 +53,12 @@ class Country:
         self.region = region
         self.ilevel = ilevel
         self.ltype = ltype
+        self.reg_id = self.region.id
+        self.ilevel_id = self.ilevel.id
+        self.ltype_id = self.ltype.id
         self.capital = capital
-        self.lon = lon
+        self.lon = 
         self.lat = lat
 
     def __repr__(self):
         return str(self.__dict__)
-
-
-adapters = {Country: ObjectMapper,
-            Region: ObjectMapper,
-            ILevel: ObjectMapper,
-            LType: ObjectMapper}
