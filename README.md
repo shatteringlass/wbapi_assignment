@@ -6,8 +6,8 @@ Docker container running PGSQL + Flask serving webpage with results
 
 ## APIs
 
-1. ​https://datahelpdesk.worldbank.org/knowledgebase/articles/898590-api-country-queries
-2. https://datacatalog.worldbank.org/dataset/global-economic-prospects
+1. ​[World Bank Countries Database](https://datahelpdesk.worldbank.org/knowledgebase/articles/898590-api-country-queries)
+2. [World Bank Database of GDP at current US$](https://data.worldbank.org/indicator/NY.GDP.MKTP.CD)
 
 ## Solution
 

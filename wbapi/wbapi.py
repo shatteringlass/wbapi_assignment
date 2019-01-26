@@ -4,18 +4,18 @@ import csv
 import requests
 import zipfile
 
-from models import Country
-from models import ILevel
-from models import LType
-from models import Region
-from models import GDPDatapoint
+from .models import Country
+from .models import ILevel
+from .models import LType
+from .models import Region
+from .models import GDPDatapoint
 
 
 class WBAPIClient:
 
     COUNTRY_API_URL = "http://api.worldbank.org/v2/country"
-    GEP_CSV_URL = "http://databank.worldbank.org/data/download/GEP_CSV.zip"
-    GEP_CSV_FILENAME = "GEPData.csv"
+    GDP_CSV_URL = "http://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.CD?downloadformat=csv"
+    GDP_CSV_FILENAME = "API_NY.GDP.MKTP.CD_DS2_en_csv_v2_10363296.csv"
 
     def __init__(self):
         self.session = requests.Session()
@@ -46,9 +46,17 @@ class WBAPIClient:
             raise Exception("Wrong handler, response is not JSON-like.")
 
     def zip_handler(self, url):
+        mime_zip = ['application/zip',
+                    'application/x-zip',
+                    'application/x-zip-compressed',
+                    'application/octet-stream',
+                    'application/x-compress',
+                    'application/x-compressed',
+                    'multipart/x-zip']
         r = self.base_request(url)
-        if 'application/x-zip-compressed' in r.headers['Content-Type']:
-            return zipfile.ZipFile(io.BytesIO(r.content))
+        if r.headers['Content-Type'] in mime_zip:
+            zf = zipfile.ZipFile(io.BytesIO(r.content))
+            return zf
         else:
             raise Exception("Wrong handler, response is not ZIP-like.")
 
@@ -83,17 +91,22 @@ class WBAPIClient:
                        lat=ctry['latitude'])
 
     @classmethod
-    def parse_gdp_data(cls, row):
+    def parse_gdp_data(cls, row, start_year=1960, end_year=2019):
         ctry_name = row["Country Name"]
         ctry_code = row["Country Code"]
-        startyear = 1999
-        endyear = 2022
-        return [GDPDatapoint(ctry_name=ctry_name, ctry_code=ctry_code, year=y, value=row[str(y)]) for y in range(startyear, endyear)]
+        years = range(start_year, end_year)
+        return [GDPDatapoint(ctry_name=ctry_name,
+                             ctry_code=ctry_code,
+                             year=y,
+                             value=row[str(y)]) for y in years]
 
     def get_gdp_data(self):
         try:
-            csvfile = self.zip_handler(url=self.GEP_CSV_URL).open(
-                self.GEP_CSV_FILENAME).read().decode('utf-8-sig').splitlines()
+            csvfile = self.zip_handler(url=self.GDP_CSV_URL)  \
+                          .open(self.GDP_CSV_FILENAME)  \
+                          .read()  \
+                          .decode('utf-8-sig')  \
+                          .splitlines()[4:]
             rows = csv.DictReader(csvfile, delimiter=",", quotechar="\"")
             result = list()
             for dct in rows:
