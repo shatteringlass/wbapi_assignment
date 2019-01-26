@@ -1,8 +1,10 @@
 # World Bank API Assignment
 
-## Architecture
+## Info
 
-Docker container running PGSQL + Flask serving webpage with results
+0. Install required packages declare inside requirements.txt
+1. Run ```python3 run.py``` 
+2. Enjoy
 
 ## APIs
 
