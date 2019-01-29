@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
+import configparser
+import glob
 import os
 import sys
-import glob
-import configparser
 
 from wbapi import db
 
@@ -16,15 +16,14 @@ def main():
     d = db.DatabaseManager(
         dbname=c['DATABASE']['dbname'], user=c['DATABASE']['user'])
     for fp in sorted(glob.glob('wbapi/sql/questions/*.sql')):
+        # Load all available queries into the DB Manager object
         d.add_query(fp)
     for n, q in d.get_query().items():
-        print(f"\n\nResults:")
-        try:
-            for record in d.run_query(n):
-                print(record)
-        except:
-            print("None")
-            continue
+        # Run all queries stored inside the DB Manager
+        columns, records = d.run_query(n)
+        print(columns)
+        for r in records:
+            print(r)
 
 
 if __name__ == '__main__':

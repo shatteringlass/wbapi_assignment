@@ -72,7 +72,7 @@ class DatabaseManager:
     def add_query(self, sql_file):
         n = len(self.queries)
         with open(sql_file, 'r') as f:
-            self.queries[n+1] = f.read()
+            self.queries[n + 1] = f.read()
 
     def get_query(self, number=None):
         if number:
@@ -85,7 +85,7 @@ class DatabaseManager:
         cur = self.conn.cursor()
         print(f"\n\nNow running query #{number} with statement:\n\n{sql}\n\n")
         cur.execute(sql)
-        return cur if cur.rowcount > 0 else []
+        return [c.name for c in cur.description], cur.fetchall()
 
     def populate_db(self):
         cur = self.conn.cursor()
