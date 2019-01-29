@@ -2,9 +2,6 @@ import psycopg2
 
 from .wbapi import WBAPIClient
 
-dbname = "wbapi"
-uid = "federico"
-
 pfields = {'Country': ['iso3', 'iso2', 'name', 'reg_id', 'ilevel_id', 'ltype_id', 'capital', 'lon', 'lat'],
            'Region': ['id', 'iso2', 'value'],
            'ILevel': ['id', 'iso2', 'value'],
@@ -59,16 +56,18 @@ def export_dml(dml, file=None):
 
 class DatabaseManager:
 
-    def __init__(self, dbname=dbname, user=uid, create_tbl=False):
-        self.conn = psycopg2.connect(f"dbname={dbname} user={uid}")
+    def __init__(self, dbname, user, create_tbl=False):
+        self.conn = psycopg2.connect(f"dbname={dbname} user={user}")
         if create_tbl:
             self.populate_db()
         self.queries = dict()
 
     def __del__(self):
-        if self.conn:
+        try:
             self.conn.commit()
             self.conn.close()
+        except:
+            return
 
     def add_query(self, sql_file):
         n = len(self.queries)

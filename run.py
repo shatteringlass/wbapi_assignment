@@ -1,10 +1,18 @@
-from wbapi import db
+#! /usr/bin/env python3
+import os
 import glob
+import configparser
+
+from wbapi import db
 
 
 def main():
-    # d = db.DatabaseManager(create_tbl=True)
-    d = db.DatabaseManager()
+    c = configparser.ConfigParser()
+    c.read('config.ini')
+    # d = db.DatabaseManager(
+    #    dbname=c['DATABASE']['dbname'], user=c['DATABASE']['user'], create_tbl=True)
+    d = db.DatabaseManager(
+        dbname=c['DATABASE']['database_name'], uid=c['DATABASE']['username'])
     for fp in sorted(glob.glob('wbapi/sql/questions/*.sql')):
         d.add_query(fp)
     for n, q in d.get_query().items():
