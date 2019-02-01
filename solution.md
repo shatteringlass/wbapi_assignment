@@ -13347,18 +13347,18 @@ Both are ratios involved in identifying the shape of GDP distribution over the r
 
 The first one is:
 
-MOA = MEDIAN(GDP) over AVG(GDP)
+```MOA = MEDIAN(GDP) over AVG(GDP)```
 
 The median is the middle-ranked value, so it gives a better impression that the average.
 What's interesting is that it appears possible to cluster the regions using this metric:
 
-MOA < 10% => South Asia, East Asia & Pacific
-10% < MOA < 30 % => North America, Europe & Central Asia, Latin America & Caribbean
-30% < MOA <= 100% => Sub-Saharan Africa, Middle East & North Africa
+- MOA < 10% => South Asia, East Asia & Pacific
+- 10% < MOA < 30 % => North America, Europe & Central Asia, Latin America & Caribbean
+- 30% < MOA <= 100% => Sub-Saharan Africa, Middle East & North Africa
 
 The other is:
 
-SOA = STDEV(GDP) over AVG(GDP)
+```SOA = STDEV(GDP) over AVG(GDP)```
 
 which is also called coefficient of variation (CV), because STDEV is a measure of dispersion around the mean.
 This metric can be used to distinguish one region among the MOA cluster \#2: Latin America has a larger variation in GDP
