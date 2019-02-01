@@ -3,6 +3,7 @@ import configparser
 import glob
 import os
 import sys
+import tabulate
 
 from wbapi import db
 
@@ -21,9 +22,7 @@ def main():
     for n, q in d.get_query().items():
         # Run all queries stored inside the DB Manager
         columns, records = d.run_query(n)
-        print(columns)
-        for r in records:
-            print(r)
+        print(tabulate.tabulate(records, columns, tablefmt="github"))
 
 
 if __name__ == '__main__':
